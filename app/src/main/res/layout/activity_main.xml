@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".MainActivity">
+
+
+
+
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/expense_recyclerview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1" />
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:background="@color/colorAccent"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="TOTAL: $20"
+            android:textColor="@color/white"
+            android:textSize="20sp" />
+
+        <Button
+            android:background="@android:color/transparent"
+            android:layout_width="wrap_content"
+            android:layout_alignParentRight="true"
+            android:textSize="25sp"
+            android:layout_height="wrap_content"
+            android:textColor="@color/white"
+            android:text="+" />
+
+
+    </RelativeLayout>
+
+    <CalendarView
+        android:id="@+id/calendar"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1" />
+</LinearLayout>
