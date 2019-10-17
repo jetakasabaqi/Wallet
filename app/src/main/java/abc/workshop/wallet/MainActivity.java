@@ -1,19 +1,24 @@
 package abc.workshop.wallet;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.CalendarView;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 import abc.workshop.wallet.model.ExpenseResponse;
 import abc.workshop.wallet.service.APIService;
@@ -26,54 +31,99 @@ import retrofit2.Response;
 public class MainActivity extends AppCompatActivity {
 
     private CalendarView calendarView;
-    private RecyclerView expenseRecyclerview;
+    private RecyclerView expenseRecyclerView;
     private ExpenseRecyclerViewAdapter adapter;
+    private TextView totalTextView;
     List<ExpenseResponse> expenses = new ArrayList<>();
+    Button addButton;
+    String selectedDate;
 
+    TextView emptyMessageTextView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        calendarView = findViewById(R.id.calendar);
-        expenseRecyclerview = findViewById(R.id.expense_recyclerview);
 
+        initViews();
         onInteractionListener();
         initList();
-        getExpensesByDate(calendarView.getDate());
+        getExpensesByDate(getTodayDate());
+    }
 
+    private void initViews() {
+        calendarView = findViewById(R.id.calendar);
+        totalTextView = findViewById(R.id.total);
+        expenseRecyclerView = findViewById(R.id.expense_recyclerview);
+        addButton = findViewById(R.id.add_btn);
+        emptyMessageTextView = findViewById(R.id.empty_message);
 
     }
 
+
+    public String getTodayDate() {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd-MM-yyyy", Locale.UK);
+        Date date = new Date();
+        return simpleDateFormat.format(date);
+
+
+    }
 
     private void onInteractionListener() {
         calendarView.setOnDateChangeListener(new CalendarView.OnDateChangeListener() {
             @Override
             public void onSelectedDayChange(CalendarView dateView, int year, int month, int dayOfMonth) {
-                Calendar c = Calendar.getInstance();
-                c.set(year, month, dayOfMonth);
-                Long time = c.getTimeInMillis();
-                getExpensesByDate(time);
+                selectedDate = dayOfMonth + "-" + (month + 1) + "-" + year;
+                showPlus(selectedDate);
+                getExpensesByDate(selectedDate);
+
                 Log.i("MainActivity", "onSelectedDayChange year: " + year + " month: " + month + " day: " + dayOfMonth);
             }
         });
 
+        addButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, AddExpenseActivity.class);
+                intent.putExtra("DATE", selectedDate);
+                startActivity(intent);
+            }
+        });
+
+
     }
 
-    private String getFormattedDate(Long timestamp) {
+    private void showPlus(String selectedDate) {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd-MM-yyyy", Locale.UK);
+        Date date = null;
+        try {
+            date = simpleDateFormat.parse(selectedDate);
+            Date todayDate = new Date();
 
-        Date date = new Date(timestamp);
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
+            if (date.after(todayDate)) {
+                addButton.setVisibility(View.INVISIBLE);
+            } else {
+                addButton.setVisibility(View.VISIBLE);
+            }
 
-        return dateFormat.format(date);
+        } catch (ParseException e) {
+            Log.e("Date exception", e.getLocalizedMessage());
+        }
+
+
     }
 
-    private void getExpensesByDate(Long timeStamp) {
-        String currentDate = getFormattedDate(timeStamp);
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        getExpensesByDate(selectedDate);
+    }
+
+    private void getExpensesByDate(String date) {
         APIService apiService = RetrofitService.getAPIService();
 
-        Call<List<ExpenseResponse>> responseCall = apiService.getExpenseByDate(currentDate);
+        Call<List<ExpenseResponse>> responseCall = apiService.getExpenseByDate(date);
 
         responseCall.enqueue(new Callback<List<ExpenseResponse>>() {
             @Override
@@ -81,8 +131,11 @@ public class MainActivity extends AppCompatActivity {
 
                 if (response.code() == 200) {
                     expenses = response.body();
-                    adapter.setmData(expenses);
+                    showEmptyMessage();
 
+                    adapter.setExpenses(expenses);
+
+                    calcTotal();
                 }
 
             }
@@ -94,13 +147,32 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private void showEmptyMessage() {
+        if (expenses.isEmpty()) {
+            emptyMessageTextView.setVisibility(View.VISIBLE);
+        } else {
+            emptyMessageTextView.setVisibility(View.GONE);
+        }
+    }
+
+    public void calcTotal() {
+        Double total = 0.0;
+
+        for (ExpenseResponse e : expenses
+        ) {
+            total += e.getPrice();
+        }
+
+        totalTextView.setText("Total: " + total + "€");
+    }
+
     private void initList() {
         adapter = new ExpenseRecyclerViewAdapter(this);
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
 
-        expenseRecyclerview.setAdapter(adapter);
-        expenseRecyclerview.setLayoutManager(linearLayoutManager);
+        expenseRecyclerView.setAdapter(adapter);
+        expenseRecyclerView.setLayoutManager(linearLayoutManager);
 
-        expenseRecyclerview.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
+        expenseRecyclerView.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
     }
 }
