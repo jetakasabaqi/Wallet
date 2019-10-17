@@ -94,21 +94,23 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showPlus(String selectedDate) {
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd-MM-yyyy");
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd-MM-yyyy", Locale.UK);
         Date date = null;
         try {
             date = simpleDateFormat.parse(selectedDate);
+            Date todayDate = new Date();
+
+            if (date.after(todayDate)) {
+                addButton.setVisibility(View.INVISIBLE);
+            } else {
+                addButton.setVisibility(View.VISIBLE);
+            }
+
         } catch (ParseException e) {
-            e.printStackTrace();
+            Log.e("Date exception", e.getLocalizedMessage());
         }
 
-        Date todayDate = new Date();
 
-        if (date.after(todayDate)) {
-            addButton.setVisibility(View.INVISIBLE);
-        } else {
-            addButton.setVisibility(View.VISIBLE);
-        }
     }
 
 
@@ -131,7 +133,7 @@ public class MainActivity extends AppCompatActivity {
                     expenses = response.body();
                     showEmptyMessage();
 
-                    adapter.setmData(expenses);
+                    adapter.setExpenses(expenses);
 
                     calcTotal();
                 }

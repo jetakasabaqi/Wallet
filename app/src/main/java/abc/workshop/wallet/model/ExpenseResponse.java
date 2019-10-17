@@ -24,38 +24,6 @@ public class ExpenseResponse implements Parcelable {
     public ExpenseResponse() {
     }
 
-    public ExpenseResponse( String description) {
-
-        this.description = description;
-
-    }
-
-    public ExpenseResponse(Parcel in) {
-        if (in.readByte() == 0) {
-            id = null;
-        } else {
-            id = in.readInt();
-        }
-        description = in.readString();
-        date = in.readString();
-        if (in.readByte() == 0) {
-            price = null;
-        } else {
-            price = in.readDouble();
-        }
-    }
-
-    public static final Creator<ExpenseResponse> CREATOR = new Creator<ExpenseResponse>() {
-        @Override
-        public ExpenseResponse createFromParcel(Parcel in) {
-            return new ExpenseResponse(in);
-        }
-
-        @Override
-        public ExpenseResponse[] newArray(int size) {
-            return new ExpenseResponse[size];
-        }
-    };
 
     public Integer getId() {
         return id;
@@ -89,6 +57,10 @@ public class ExpenseResponse implements Parcelable {
         this.price = price;
     }
 
+    public String getPriceAndCurrency() {
+        return this.price + "€";
+    }
+
     @Override
     public int describeContents() {
         return 0;
@@ -111,4 +83,33 @@ public class ExpenseResponse implements Parcelable {
             dest.writeDouble(price);
         }
     }
+
+
+    private ExpenseResponse(Parcel in) {
+        if (in.readByte() == 0) {
+            id = null;
+        } else {
+            id = in.readInt();
+        }
+        description = in.readString();
+        date = in.readString();
+        if (in.readByte() == 0) {
+            price = null;
+        } else {
+            price = in.readDouble();
+        }
+    }
+
+    public static final Creator<ExpenseResponse> CREATOR = new Creator<ExpenseResponse>() {
+        @Override
+        public ExpenseResponse createFromParcel(Parcel in) {
+            return new ExpenseResponse(in);
+        }
+
+        @Override
+        public ExpenseResponse[] newArray(int size) {
+            return new ExpenseResponse[size];
+        }
+    };
+
 }

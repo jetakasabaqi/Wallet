@@ -1,6 +1,5 @@
 package abc.workshop.wallet;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -28,7 +27,7 @@ import retrofit2.Response;
 
 public class ExpenseRecyclerViewAdapter extends RecyclerView.Adapter<ExpenseRecyclerViewAdapter.ExpenseViewHolder> {
 
-    private List<ExpenseResponse> mData = new ArrayList<>();
+    private List<ExpenseResponse> expenses = new ArrayList<>();
     private Context context;
 
 
@@ -47,78 +46,58 @@ public class ExpenseRecyclerViewAdapter extends RecyclerView.Adapter<ExpenseRecy
     @Override
     public void onBindViewHolder(ExpenseViewHolder holder, final int position) {
 
+        String positionOrder = String.valueOf((position + 1));
 
-        holder.description.setText(mData.get(position).getDescription());
-        holder.price.setText(mData.get(position).getPrice() + "€");
-        holder.order.setText((position + 1) + "");
+        holder.description.setText(expenses.get(position).getDescription());
+        holder.price.setText(expenses.get(position).getPriceAndCurrency());
+        holder.order.setText(positionOrder);
 
         holder.container.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent i = new Intent(context, AddExpenseActivity.class);
-                i.putExtra("expenseObj", mData.get(position));
-                ((Activity) context).startActivity(i);
+                i.putExtra("EXPENSE", expenses.get(position));
+                context.startActivity(i);
             }
         });
 
         holder.container.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
+
+                showDeleteDialog();
+
+                return true;
+
+            }
+
+            private void showDeleteDialog() {
                 new AlertDialog.Builder(context)
                         .setTitle("Delete entry")
                         .setMessage("Are you sure you want to delete this entry?")
 
-                        // Specifying a listener allows you to take an action before dismissing the dialog.
-                        // The dialog is automatically dismissed when a dialog button is clicked.
+
                         .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int which) {
                                 // Continue with delete operation
-                                deleteItem(position, mData.get(position).getId());
+                                deleteExpenseCall(position, expenses.get(position).getId());
                             }
                         })
 
-                        // A null listener allows the button to dismiss the dialog and take no further action.
                         .setNegativeButton(android.R.string.no, null)
                         .setIcon(android.R.drawable.ic_dialog_alert)
                         .show();
-                return true;
-            }
-
-
-        });
-
-
-    }
-
-    private void deleteItem(final int position, Integer id) {
-        APIService apiService = RetrofitService.getAPIService();
-
-        Call<Void> responseCall = apiService.deleteExpense(id);
-
-        responseCall.enqueue(new Callback<Void>() {
-            @Override
-            public void onResponse(Call<Void> call, Response<Void> response) {
-
-                if (response.code() == 200) {
-                    Toast.makeText(context, "Delete success", Toast.LENGTH_LONG).show();
-                    mData.remove(position);
-                    notifyDataSetChanged();
-                    ((MainActivity) context).calcTotal();
-                }
 
             }
 
-            @Override
-            public void onFailure(Call<Void> call, Throwable t) {
-                Log.e("Error:", t.getLocalizedMessage());
-            }
+
         });
     }
 
 
     @Override
     public int getItemCount() {
-        return mData.size();
+        return expenses.size();
     }
 
 
@@ -133,10 +112,39 @@ public class ExpenseRecyclerViewAdapter extends RecyclerView.Adapter<ExpenseRecy
             container = itemView.findViewById(R.id.container);
             order = itemView.findViewById(R.id.order_number);
         }
+
     }
 
-    void setmData(List<ExpenseResponse> mData) {
-        this.mData = mData;
+    void setExpenses(List<ExpenseResponse> expenses) {
+        this.expenses = expenses;
         notifyDataSetChanged();
     }
+
+
+    private void deleteExpenseCall(final int position, Integer id) {
+        APIService apiService = RetrofitService.getAPIService();
+
+        Call<Void> responseCall = apiService.deleteExpense(id);
+
+        responseCall.enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void> response) {
+
+                if (response.code() == 200) {
+                    Toast.makeText(context, "Delete success", Toast.LENGTH_LONG).show();
+                    expenses.remove(position);
+                    notifyDataSetChanged();
+                    ((MainActivity) context).calcTotal();
+                }
+
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
+                Log.e("Error:", t.getLocalizedMessage());
+            }
+        });
+    }
+
+
 }

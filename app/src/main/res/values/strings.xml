@@ -1,4 +1,11 @@
 <resources>
     <string name="app_name">Wallet</string>
     <string name="add">ADD</string>
+    <string name="edit">EDIT</string>
+    <string name="description">Description</string>
+    <string name="price">Price</string>
+    <string name="no_expenses_on_this_day">No expenses on this day!</string>
+    <string name="plus">+</string>
+    <string name="total">TOTAL:</string>
+    <string name="image_logo">image logo</string>
 </resources>

@@ -5,7 +5,9 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import abc.workshop.wallet.model.ExpenseResponse;
@@ -17,10 +19,10 @@ import retrofit2.Response;
 
 public class AddExpenseActivity extends AppCompatActivity {
 
-    EditText description, price;
+    EditText descriptionEditText, priceEditText;
     Button addButton;
-    private ExpenseResponse expenseObj;
-    Intent mIntent;
+    private ExpenseResponse expense;
+    Intent intent;
     String selectedDate;
 
     @Override
@@ -28,31 +30,56 @@ public class AddExpenseActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_expense);
 
-        expenseObj = getIntent().getParcelableExtra("expenseObj");
-        mIntent = getIntent();
+        initViews();
+        initListeners();
+        initIntent();
+    }
 
-        selectedDate = mIntent.getStringExtra("DATE");
-        description = findViewById(R.id.description_et);
-        price = findViewById(R.id.price_et);
-
+    private void initViews() {
+        descriptionEditText = findViewById(R.id.description_et);
+        priceEditText = findViewById(R.id.price_et);
         addButton = findViewById(R.id.add_button);
+    }
 
+    private void initListeners() {
         addButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (expenseObj == null)
-                    addExpense();
+                if (expense == null)
+                    addExpenseCall();
                 else
-                    editExpense();
+                    editExpenseCall();
             }
         });
+    }
+
+    private void initIntent() {
+        intent = getIntent();
+        expense = intent.getParcelableExtra("EXPENSE");
+        selectedDate = intent.getStringExtra("DATE");
+
         setIsEditOrAdd();
     }
 
-    private void addExpense() {
-        String desc = description.getText().toString();
 
-        Double priceValue = Double.valueOf(price.getText().toString());
+    private void setIsEditOrAdd() {
+        if (expense == null) {
+            // here we'r for ADD
+            addButton.setText(getResources().getString(R.string.add));
+
+        } else {
+            // here we'r for EDIT
+            addButton.setText(getResources().getString(R.string.edit));
+
+            descriptionEditText.setText(expense.getDescription());
+            priceEditText.setText(expense.getPrice().toString());
+        }
+    }
+
+    private void addExpenseCall() {
+        String desc = descriptionEditText.getText().toString();
+
+        Double priceValue = Double.valueOf(priceEditText.getText().toString());
 
         ExpenseResponse expenseResponse = new ExpenseResponse();
         expenseResponse.setDate(selectedDate);
@@ -64,7 +91,7 @@ public class AddExpenseActivity extends AppCompatActivity {
 
         responseCall.enqueue(new Callback<ExpenseResponse>() {
             @Override
-            public void onResponse(Call<ExpenseResponse> call, Response<ExpenseResponse> response) {
+            public void onResponse(@NonNull Call<ExpenseResponse> call, @NonNull Response<ExpenseResponse> response) {
                 if (response.code() == 200) {
                     onBackPressed();
 
@@ -72,22 +99,23 @@ public class AddExpenseActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onFailure(Call<ExpenseResponse> call, Throwable t) {
+            public void onFailure(@NonNull Call<ExpenseResponse> call, @NonNull Throwable t) {
 
+                Toast.makeText(getApplicationContext(), t.getLocalizedMessage(), Toast.LENGTH_LONG).show();
             }
         });
     }
 
-    private void editExpense() {
-        expenseObj.setDescription(description.getText().toString());
-        expenseObj.setPrice(Double.parseDouble(price.getText().toString()));
+    private void editExpenseCall() {
+        expense.setDescription(descriptionEditText.getText().toString());
+        expense.setPrice(Double.parseDouble(priceEditText.getText().toString()));
         APIService apiService = RetrofitService.getAPIService();
 
-        Call<ExpenseResponse> responseCall = apiService.editExpense(expenseObj);
+        Call<ExpenseResponse> responseCall = apiService.editExpense(expense);
 
         responseCall.enqueue(new Callback<ExpenseResponse>() {
             @Override
-            public void onResponse(Call<ExpenseResponse> call, Response<ExpenseResponse> response) {
+            public void onResponse(@NonNull Call<ExpenseResponse> call, @NonNull Response<ExpenseResponse> response) {
                 if (response.code() == 200) {
                     onBackPressed();
 
@@ -95,23 +123,11 @@ public class AddExpenseActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onFailure(Call<ExpenseResponse> call, Throwable t) {
-
+            public void onFailure(@NonNull Call<ExpenseResponse> call, @NonNull Throwable t) {
+                Toast.makeText(getApplicationContext(), t.getLocalizedMessage(), Toast.LENGTH_LONG).show();
             }
         });
     }
 
-    private void setIsEditOrAdd() {
-        if (expenseObj == null) {
-            // here we'r for ADD
-            addButton.setText("ADD");
 
-        } else {
-            // here we'r for EDIT
-            addButton.setText("EDIT");
-
-            description.setText(expenseObj.getDescription());
-            price.setText(expenseObj.getPrice() + "");
-        }
-    }
 }
